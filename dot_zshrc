@@ -93,6 +93,19 @@ ts() {
   fi
 }
 alias go="cd /Users/ihlee"
+alias od='cd ~/Library/CloudStorage/"OneDrive-이씨에스텔레콤"'
+
+# OneDrive 파일 검색 & 열기 (fzf)
+of() {
+  local base=~/Library/CloudStorage/"OneDrive-이씨에스텔레콤"
+  local file
+  file=$(find "$base" -type f 2>/dev/null | sed "s|$base/||" | fzf \
+    --prompt="OneDrive> " \
+    --height=60% \
+    --reverse \
+    --preview "bat --color=always --style=numbers --line-range=:100 \"$base/{}\" 2>/dev/null || file \"$base/{}\"")
+  [[ -n "$file" ]] && open "$base/$file"
+}
   # 기본 ls 대체 (숨김 파일 안 보임)
 alias ls='lsd --group-dirs first'
 
