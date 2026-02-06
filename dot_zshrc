@@ -101,7 +101,7 @@ zf() {
 
   # 이동 알림 및 이동
   echo "📁 Moving to: $dir"
-  z "$dir" || return
+  j "$dir" || return
   # 이동 후 lsd 출력
   lsd --group-dirs first
 }
