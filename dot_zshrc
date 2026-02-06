@@ -58,6 +58,29 @@ alias ta="tmux attach -t"
 alias tn="tmux new -s"
 alias tl="tmux ls"
 alias tk="tmux kill-session -t"
+
+# tmux 세션 검색 & 접속 (fzf)
+ts() {
+  local sessions session
+  sessions=$(tmux list-sessions 2>/dev/null)
+  [[ -z "$sessions" ]] && echo "No tmux sessions" && return
+
+  session=$(echo "$sessions" | fzf \
+    --prompt="tmux session: " \
+    --height=40% \
+    --reverse \
+    --preview 'tmux list-windows -t $(echo {} | cut -d: -f1)' \
+    --preview-window=right:50%:wrap \
+    | cut -d: -f1)
+
+  [[ -z "$session" ]] && return
+
+  if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "$session"
+  else
+    tmux attach -t "$session"
+  fi
+}
 alias go="cd /Users/ihlee"
   # 기본 ls 대체 (숨김 파일 안 보임)
 alias ls='lsd --group-dirs first'
