@@ -1,0 +1,107 @@
+
+### Added by Zinit's installer
+if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+    print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
+    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
+    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
+        print -P "%F{33} %F{34}Installation successful.%f%b" || \
+        print -P "%F{160} The clone has failed.%f%b"
+fi
+
+source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
+# Load a few important annexes, without Turbo
+# (this is currently required for annexes)
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+### End of Zinit's installer chunk
+
+# 플러그인
+zinit light zsh-users/zsh-autosuggestions
+zinit light zsh-users/zsh-syntax-highlighting
+zinit light zsh-users/zsh-completions
+
+# 각종 cli 도구들
+# fzf
+eval "$(fzf --zsh)"
+
+# zoxide (--cmd j로 zi 충돌 방지: j, ji 사용)
+eval "$(zoxide init zsh --cmd j)"
+
+# workspace 빠른 이동 (zoxide + fzf)
+ws() {
+  local dir
+  dir=$(zoxide query -l | grep -i workspace | fzf)
+  [[ -n "$dir" ]] && cd "$dir"
+}
+
+# starship
+eval "$(starship init zsh)"
+
+# alias
+alias cat="bat"
+alias vim="nvim"
+alias vi="nvim"
+alias s="source ~/.zshrc"
+alias zc="vi ~/.zshrc"
+alias c="claude"
+alias lg="lazygit"
+  # tmux
+alias t="tmux"
+alias ta="tmux attach -t"
+alias tn="tmux new -s"
+alias tl="tmux ls"
+alias tk="tmux kill-session -t"
+alias go="cd /Users/ihlee"
+  # 기본 ls 대체 (숨김 파일 안 보임)
+alias ls='lsd --group-dirs first'
+
+# la: 숨김 파일 포함 + 간략 보기
+alias la='lsd -a --group-dirs first'
+
+# ll: 숨김 파일 포함 + 상세 보기
+alias ll='lsd -alh --group-dirs first'
+
+# lt: 트리 구조로 보기 (lt2: 2 depth)
+alias lt='lsd --tree --group-dirs first'
+alias lt2='lsd --tree --depth 2 --group-dirs first'
+
+# 프로젝트명만 출력해서 선택
+alias gls='glab repo list --mine -P 100 -F json | jq -r ".[].ssh_url_to_repo" | fzf | pbcopy && echo "copied!"'
+
+# 프로젝트명으로 clone cli 출력
+alias glc='print -z "git clone $(glab repo list --mine -P 100 -F json | jq -r ".[].ssh_url_to_repo" | fzf)"'
+
+# 조직 포함해서 보기
+alias ghc='print -z "git clone $(gh repo list --limit 100 --json nameWithOwner,sshUrl | jq -r ".[] | \"\(.nameWithOwner) \(.sshUrl)\"" | fzf | awk "{print \$NF}")"'
+
+export PATH="$HOME/.local/bin:$PATH"
+eval "$(mise activate zsh)"
+export PATH="~/homebrew/opt/trash-cli/bin:$PATH"
+
+# zoxide + fzf + lsd 미리보기
+zf() {
+  local dir
+  # zoxide query + fzf with lsd preview
+  dir=$(zoxide query -l | fzf \
+    --prompt="📂 Select directory: " \
+    --height=60% \
+    --reverse \
+    --preview 'lsd --tree --depth 2 --group-dirs first --color=always --icon=always {}' \
+    --preview-window=right:40%:wrap)
+
+  # 선택 취소시 종료
+  [[ -z "$dir" ]] && return
+
+  # 이동 알림 및 이동
+  echo "📁 Moving to: $dir"
+  z "$dir" || return
+  # 이동 후 lsd 출력
+  lsd --group-dirs first
+}
